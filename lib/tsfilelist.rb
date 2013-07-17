@@ -21,6 +21,7 @@ class TSFileList < Array
     self
   rescue Errno::EACCES
     # permissionが無いdirectoryをopendirをopenしようとした時の例外. 無視.
+    self
   end
   
   # 条件に一致するtsを再帰的に追加したリストを生成
