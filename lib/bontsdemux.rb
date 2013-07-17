@@ -5,7 +5,7 @@
 require "pathname"
 
 
-# tsファイルからmp4ファイル用audioを抽出. 1chか2ch.
+# tsファイルからmp4ファイル用audioを抽出. 1chか2ch. インスタンスは作らない.
 class BonTsDemux
   # bon_ts_demuxを設定する
   def self.set_bon bon_path; @@btd = bon_path; end
@@ -18,9 +18,10 @@ class BonTsDemux
     
     # 出力ファイル検索. globでは全角に対応できない.
     file = Pathname file
-    filedir, filename = file.dirname, file.basename(".*")
+    filedir, filename = file.dirname, file.basename(".*").to_s
+    p filename
     filedir.opendir.each { |f|
-      next unless (/^(.*?) (DELAY -?\d+ms\.aac)$/ =~ f.toutf8) && ($1 == filename)
+      next unless (/^(.*?) (DELAY -?\d+ms\.aac)$/i =~ f.toutf8) && ($1 == filename)
       # ファイル名をesを含むものに変更
       newpath = filedir + "#{$1} es#{es} #{$2}"
       (filedir + f).rename(newpath)
@@ -29,13 +30,14 @@ class BonTsDemux
     return nil
   end
   
-  def initialize ts_file
+  # => [audios]
+  def self.extract ts_file
     # まずesを変更し2ファイル生成
-    @audio = [0,1].collect{|es| self.class.btdcmd(ts_file, es) }
-    raise("BonTsDemux : no output file : #{ts_file}") unless @audio.all?
+    audios = [0,1].collect{|es| btdcmd(ts_file, es) }
+    raise("BonTsDemux : no output file : #{ts_file}") unless audios.all?
     # 同じ結果なら後者を削除
-    @audio.pop if @audio[0].binread == @audio[1].binread
+    audios.pop.delete { |unusedlocal|  } if audios[0].binread == audios[1].binread
+    return audios
   end
-  attr_reader :audio
 end
 
