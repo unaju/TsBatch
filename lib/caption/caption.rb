@@ -30,7 +30,7 @@ class TSCaption
   
   # 字幕追加. offsetは時間offset [s]
   def add ts_file, offset
-    srtf, assf = c2a(ts_file)
+    srtf, assf = self.class.c2a(ts_file)
     @srt.add_srt(srtf.read.toutf8, offset) if srtf
     @ass.read_ass(assf.to_s, offset) if assf
   end
@@ -44,47 +44,3 @@ class TSCaption
 end
 
 
-
-
-
-
-=begin
-# 字幕のoffset時間を取得. => [0, t1, t1+t2, ...]. 最後の要素は別にいらない.
-def get_offset mp4s
-	offset, result = 0.0, [0.0]
-  mp4s.each{ |mp4| result << (offset += Mp4box.mp4_length(mp4)[0]) }
-  result
-end
-
-
-# 字幕ファイルがあるなら結合し => [srt, ass]. 無いならそれがnil
-def get_caption mp4s, srts, asss, cpo
-  srt = (mp4s.size == srts.size) ? Srt.new : nil
-	ass = (mp4s.size == asss.size) ? Ass.new : nil
-  
-  srts.size.times{|i| srt.add_srt(srts[i].read.toutf8, cpo[i]) } if(srt)
-  asss.size.times{|i| ass.read_ass(asss[i].to_s, cpo[i]) } if(ass)
-  
-  [srt, ass]
-end
-
-
-
-
-
-# srtが十分あるなら結合してそのパスを返す. 無いならnil.
-def srt_join mp4s, srts
-  return nil if srts.empty? || (mp4s.size > srts.size)
-  
-  # srtをoffsetしながら追加
-  srt_v, offset = Srt.new, 0.0
-  mp4s.each_with_index { |mp4,idx|
-    srt_v.add_srt(srts[idx].read.toutf8, offset)
-    offset += Mp4box.mp4_seconds(mp4)
-  }
-  
-  # srt書き出し
-  IO.write(TEMP_FILE[:srt].to_s, srt_v.to_s)
-  TEMP_FILE[:srt]
-end
-=end
