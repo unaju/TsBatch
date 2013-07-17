@@ -14,7 +14,7 @@ class BonTsDemux
   def self.btdcmd file, es
     # 実行
     cmd = %Q!"#{@@btd}" -i "#{file}" -nogui -quit -es #{es} -encode Demux(aac) -nd -bg!
-    system cmd
+    `#{cmd} 2>&1`
     
     # 出力ファイル検索. globでは全角に対応できない.
     file = Pathname file

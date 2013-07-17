@@ -17,7 +17,8 @@ class TSCaption
   # => [srt file path or nil(false), ass file path or nil(false)]
   def self.c2a ts_file
     ts_file = Pathname ts_file
-    system %Q!"#{@@c2a}" -format dual "#{ts_file}"!
+    cmd = %Q!"#{@@c2a}" -format dual "#{ts_file}"!
+    `#{cmd} 2>&1`
     return [".srt", ".ass"].collect{ |ext|
       pt = ts_file.sub_ext(ext)
       pt.file? && pt
