@@ -1,12 +1,54 @@
 #!ruby -Ku
 
-require "#{File.dirname(__FILE__)}/wincode"
+mydir = File.expand_path File.dirname(__FILE__)
+require File.join(mydir, "wincode")
 require "time"
 
-# Mp4boxコマンドを格納
-class Mp4boxCmd
-  def initialize m4b
-    @cmd = %Q!"#{m4b}"!
+
+# MP4Boxの操作コマンドの管理. インスタンスはコマンドを格納
+class MP4Box
+  # mp4boxの指定
+  def self.set_m4b mp4box_path; @@m4b = mp4box_path; end
+  
+  # mp4の長さを得る. => [Float(seconds)]
+  def self.mp4_length file
+    info(file).scan(/Duration\s(\d+:\d+:\d+\.\d+)/).collect{ |mt|
+      Time.parse(mt[0], Time.new(0)) - Time.new(0)
+    }
+  end
+  
+  # ファイル情報を得る
+  def self.info file, track = nil
+    self.new(%!"#{@@m4b}" -info #{track} "#{file}"!).exe_cmd
+  end
+  
+  
+  # 特定の用途に対応するコマンドを生成するクラスメソッド ----
+  
+  
+  # 音声と動画を結合するコマンドのインスタンスを生成
+  def self.cmd_join_av out, video, *audios
+    r = self.new
+    r.set_output(out)
+    r.add_video(video)
+    audios.each{|a| r.add_audio(a) }
+    r
+  end
+  
+  # 動画を結合するコマンドを生成
+  def self.cmd_join_movies out, movies
+    r = self.new
+    r.set_output(out)
+    movies.each{ |mv| r.add_cmd("cat", mv) }
+    r
+  end
+  
+  
+  # ここから下がインスタンスメソッド ----------------------
+   
+  
+  def initialize opt = nil
+    @cmd = %Q!"#{@@m4b}"#{opt}!
   end
   attr_reader :cmd 
   
@@ -14,6 +56,7 @@ class Mp4boxCmd
     @cmd += " -#{cmd}"
     @cmd += %Q! "#{file}"! if file
     @cmd += '#' + track if track
+    self
   end
   
   def set_output path; add_cmd("new", path); end
@@ -22,53 +65,16 @@ class Mp4boxCmd
     delay = (path.to_s =~ /\s(\-?\d+)ms.aac$/) && $1
     add_cmd("add", path, "audio")
     @cmd += " -inter #{delay}" if delay
+    self
   end
   
-  def exe
-    puts @cmd
+  def exe_cmd
+    puts "\n#{@cmd}".toutf8
     win_rsys(@cmd)
   end
 end
 
-# MP4boxのコマンド生成と実行
-class Mp4box
-  def initialize m4b_path
-    @m4b = m4b_path
-  end
-  
-  # ファイル情報を得る
-  def info file, track = nil
-    win_rsys(%!"#{@m4b}" -info #{track} "#{file}"!)
-  end
-  
-  # mp4の長さを得る. => [Float(seconds)]
-  def mp4_length file
-    info(file).scan(/Duration\s(\d+:\d+:\d+\.\d+)/).collect{ |mt|
-      Time.parse(mt[0], Time.new(0)) - Time.new(0)
-    }
-  end
-  
-  # 動画と音声を結合するコマンドを生成
-  def join_movie video, audio, out
-    c = cmd
-    c.set_output(out)
-    c.add_video(video)
-    c.add_audio(audio)
-    c
-  end
-  
-  # 動画を結合するコマンドを生成
-  def join_movies out, movies
-    c = cmd
-    c.set_output(out)
-    movies.each{ |mv| c.add_cmd("cat", mv) }
-    c
-  end
-  
-  # コマンド生成クラスのnew
-  def cmd; Mp4boxCmd.new(@m4b); end
-  
-  
-end
+
+
 
 
