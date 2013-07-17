@@ -1,7 +1,7 @@
 #!ruby -Ku
 
-mydir = File.expand_path File.dirname(__FILE__)
-require File.join(mydir, "wincode")
+#mydir = File.expand_path File.dirname(__FILE__)
+#require File.join(mydir, "wincode")
 require "time"
 
 
@@ -70,7 +70,7 @@ class MP4Box
   
   def exe_cmd
     puts "\n#{@cmd}".toutf8
-    win_rsys(@cmd)
+    `#{@cmd} 2>&1`.toutf8
   end
 end
 
