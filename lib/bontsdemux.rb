@@ -19,7 +19,7 @@ class BonTsDemux
     # 出力ファイル検索. globでは全角に対応できない.
     file = Pathname file
     filedir, filename = file.dirname, file.basename(".*").to_s
-    p filename
+    #p filename
     filedir.opendir.each { |f|
       next unless (/^(.*?) (DELAY -?\d+ms\.aac)$/i =~ f.toutf8) && ($1 == filename)
       # ファイル名をesを含むものに変更
