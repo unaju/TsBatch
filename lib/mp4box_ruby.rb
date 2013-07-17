@@ -19,7 +19,7 @@ class MP4Box
   
   # ファイル情報を得る
   def self.info file, track = nil
-    self.new(%!"#{@@m4b}" -info #{track} "#{file}"!).exe_cmd
+    self.new(%! -info #{track} "#{file}"!).exe_cmd
   end
   
   
@@ -69,7 +69,7 @@ class MP4Box
   end
   
   def exe_cmd
-    puts "\n#{@cmd}".toutf8
+    #puts "\n#{@cmd}".toutf8
     `#{@cmd} 2>&1`.toutf8
   end
 end
