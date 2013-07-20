@@ -17,12 +17,15 @@ class TSCaption
   # => [srt file path or nil(false), ass file path or nil(false)]
   def self.c2a ts_file
     ts_file = Pathname ts_file
-    cmd = %Q!"#{@@c2a}" -format dual "#{ts_file}"!
-    `#{cmd} 2>&1`
-    return [".srt", ".ass"].collect{ |ext|
-      pt = ts_file.sub_ext(ext)
-      pt.file? && pt
-    }
+    outfile = [".srt", ".ass"].collect{ |ext| ts_file.sub_ext(ext) }
+    
+    # ファイルが既に存在する場合は抽出を実行しない
+    unless outfile.find {|f| f.file? }
+      cmd = %Q!"#{@@c2a}" -format dual "#{ts_file}"!
+      `#{cmd} 2>&1`
+    end
+    
+    return outfile.collect{ |f| f.file? && f }
   end
   
   def initialize
