@@ -11,7 +11,7 @@ require "kconv"
 
 MYDIR = Pathname.new(__FILE__).dirname.expand_path
 libdir = (MYDIR + "../lib").expand_path
-require(libdir + "wincode")
+#require(libdir + "wincode")
 require(libdir + "tsfilelist")
 require(libdir + "caption/caption")
 require(libdir + "mp4box_ruby")
@@ -52,6 +52,32 @@ class MP4JoinJob
     (@input_files.size > 2) ? execjob_multi_movie : execjob_single_movie
   end
   
+  # 1
+  def execjob_single_movie
+    tsf = @input_files[0]
+    
+    # 音声をtsから抽出
+    audios = nil
+    view_progress("extract audio ... ") {
+      audios = BonTsDemux.extract(tsf)
+      "#{audios.size} audios"
+    }
+    # 音声を無音mp4(エンコード結果)と結合
+    view_progress("join audio and video ... ") {
+      MP4Box.cmd_join_av(
+        @dest_f.sub_ext(".mp4"), tsf.sub_ext(".mp4"), *audios
+      ).exe_cmd
+      "complete"
+    }
+    # 字幕抽出
+    view_progress("extract caption ... ") {
+      caption = TSCaption.new
+      caption.add(tsf, 0.0)
+      caption.writeout(@dest_f)
+      "complete"
+    }
+  end
+  
   # 複数のファイルを結合する場合
   def execjob_multi_movie
     # phase1. ファイルごとに必要な前処理をする
@@ -64,15 +90,15 @@ class MP4JoinJob
       mp4f = tsf.sub_ext(".mp4")
       
       # 音声をtsから抽出
-      temp_mp4, audios = nil, nil
+      audios = nil
       view_progress("extract audio ... ") {
         audios = BonTsDemux.extract(tsf)
-        temp_mp4 = @@tempdir + "mp4jointemp-#{idx}.mp4"
-        temp_mp4s << temp_mp4
-        "#{audios.size} files"
+        "#{audios.size} audios"
       }
       
       # 音声を無音mp4(エンコード結果)と結合
+      temp_mp4 = @@tempdir + "mp4jointemp-#{idx}.mp4"
+      temp_mp4s << temp_mp4
       view_progress("join audio and video ... ") {
         MP4Box.cmd_join_av(temp_mp4, mp4f, *audios).exe_cmd
         "complete"
