@@ -39,7 +39,8 @@ class MP4Box
   def self.cmd_join_movies out, movies
     r = self.new
     r.set_output(out)
-    movies.each{ |mv| r.add_cmd("cat", mv) }
+    r.add_cmd("add", movies[0])
+    movies[1..-1].each{ |mv| r.add_cmd("cat", mv) }
     r
   end
   
