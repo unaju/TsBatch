@@ -19,6 +19,16 @@ require(libdir + "bontsdemux")
 
 
 
+# Progress表示用. begin_messageを表示してからyield結果 + 処理時間を表示
+def view_progress begin_message
+	print begin_message
+  t = Time.now
+  print yield
+  puts " (%.2fs)" % (Time.now() - t)
+end
+
+
+
 # joinするjob. 1 file / 1 job instance
 class MP4JoinJob
   # テンポラリディレクトリを設定
@@ -54,34 +64,40 @@ class MP4JoinJob
       mp4f = tsf.sub_ext(".mp4")
       
       # 音声をtsから抽出
-      print "extract audio ... "
-      audios = BonTsDemux.extract(tsf)
-      temp_mp4 = @@tempdir + "mp4jointemp-#{idx}.mp4"
-      temp_mp4s << temp_mp4
-      puts "#{audios.size} files"
+      temp_mp4, audios = nil, nil
+      view_progress("extract audio ... ") {
+        audios = BonTsDemux.extract(tsf)
+        temp_mp4 = @@tempdir + "mp4jointemp-#{idx}.mp4"
+        temp_mp4s << temp_mp4
+        "#{audios.size} files"
+      }
       
       # 音声を無音mp4(エンコード結果)と結合
-      print "join audio and video ..."
-      MP4Box.cmd_join_av(temp_mp4, mp4f, *audios).exe_cmd
-      puts "complete"
+      view_progress("join audio and video ... ") {
+        MP4Box.cmd_join_av(temp_mp4, mp4f, *audios).exe_cmd
+        "complete"
+      }
       
       # 字幕抽出
-      print "extract caption ... "
-      caption.add(tsf, offset)
-      offset += MP4Box.mp4_length(mp4f).first
-      puts "complete"
+      view_progress("extract caption ... ") {
+        caption.add(tsf, offset)
+        offset += MP4Box.mp4_length(mp4f).first
+        "complete"
+      }
     }
     
     # phase2. 動画を結合し字幕を書き出す
-    print "phase2 : join mp4s ... "
-    MP4Box.cmd_join_movies(@dest_f.sub_ext(".mp4"), temp_mp4s).exe_cmd
-    caption.writeout(@dest_f)
-    puts "complete"
+    view_progress("phase2 : join mp4s ... ") {
+      MP4Box.cmd_join_movies(@dest_f.sub_ext(".mp4"), temp_mp4s).exe_cmd
+      caption.writeout(@dest_f)
+      "complete"
+    }
     
     # 書き出したtempを削除
-    print "remove temporary files : "
-    temp_mp4s.each{|f| f.delete }
-    puts "complete"
+    view_progress("remove temporary files : ") {
+      temp_mp4s.each{|f| f.delete }
+      "complete"
+    }
   end
   
   
@@ -137,9 +153,10 @@ def main
   # 実行
   jobs.each{ |j|
     puts "-"*60
-    puts "job : #{j.o_relp}"
-    j.execjob
-    puts "job complete"
+    view_progress("job : #{j.o_relp}\n") {
+      j.execjob
+      "job complete"
+    }
   }
 end
 main if __FILE__ == $0
