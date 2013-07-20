@@ -3,6 +3,8 @@
 # BonTsDemuxを扱う
 
 require "pathname"
+mydir = Pathname(__FILE__).dirname.expand_path
+require(mydir + "ts_analyzer")
 
 
 # tsファイルからmp4ファイル用audioを抽出. 1chか2ch. インスタンスは作らない.
@@ -11,11 +13,13 @@ class BonTsDemux
   def self.set_bon bon_path; @@btd = bon_path; end
   
   # bon_ts_demuxの実行コマンドを生成,実行の後にそのPathを返す
-  def self.btdcmd file, es
+  def self.btdcmd file, es = nil, srv = nil
     filedir, filename = file.dirname, file.basename(".*").to_s
     
     # 実行
-    cmd = %Q!"#{@@btd}" -i "#{file}" -nogui -quit -es #{es} -encode Demux(aac) -nd -bg!
+    cmd = %Q!"%s" -i "%s" %s-nogui -quit %s-encode Demux(aac) -nd -bg! % [
+      @@btd, file, (srv && "-srv #{srv} "), (es && "-es #{es} ")
+    ]
     `#{cmd} 2>&1`
     
     # 出力ファイル検索. globでは全角に対応できない.
@@ -40,8 +44,12 @@ class BonTsDemux
     }
     return o.collect{|f| dirname + f} unless o.empty?
     
+    # サービスID抽出
+    sid = TSAnalyzer.service_id(ts_file.to_s)
+    sid = sid && sid[0]
+    
     # まずesを変更し2ファイル生成
-    audios = [0,1].collect{|es| btdcmd(ts_file, es) }
+    audios = [0,1].collect{|es| self.btdcmd(ts_file, es, sid) }
     raise("BonTsDemux : no output file : #{ts_file}") unless audios.all?
     
     # 同じ結果なら後者を削除
