@@ -48,7 +48,7 @@ class MP4JoinJob
   
   # job実行.
   def execjob
-    @dest_d.mkpath # 保存先準備
+    @dest_f.dirname.mkpath # 保存先準備
     (@input_files.size > 2) ? execjob_multi_movie : execjob_single_movie
   end
   
