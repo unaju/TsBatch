@@ -16,10 +16,23 @@ require(libdir + "tsfilelist")
 
 MME = YAML.load_file((MYDIR + "config.yml").to_s)[:MME]
 
+# rubyは引数を与えると,引数のファイルの中身をSTDINに入れてしまうため,
+# ARGVがあるか無いかで処理を変更する
+@@argv = ARGV.empty? ? nil : ARGV.reverse
+
+def get_dirname
+  if @@argv
+    @@argv.pop.to_s # popがnilの場合は空行入力と同じ
+  else
+    print "dir > "
+    gets.to_s.chomp.toutf8
+  end
+end
+
+
 def main
   # 対象directory取得
-  print "dir >"
-  dir = STDIN.gets.to_s.chomp.toutf8
+  dir = get_dirname
   return if dir.empty?
   dir = wpath dir
   
@@ -36,6 +49,8 @@ def main
   	puts "batch #{file}"
     system %Q!"#{MME}" -g -q "#{file}"! # sjisのまま扱っているためそのまま実行
   }
+  
+  main # 次を実行
 end
 main if __FILE__ == $0
 
