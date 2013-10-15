@@ -161,10 +161,14 @@ def main
   dest = wpath conf[:dest]
   
   # 対象directory取得
-  print "dir >"
-  dir = STDIN.gets.to_s.chomp.toutf8
+  dir = if ARGV.empty?
+    print "dir >"
+    STDIN.gets.to_s.chomp.toutf8
+  else
+    ARGV.first
+  end
   return if dir.empty?
-
+  
   # 変換ファイル取得
   jobs = MP4JoinJob.makejob(wpath(dir), dest)
 
