@@ -16,6 +16,7 @@ require(libdir + "tsfilelist")
 require(libdir + "caption/caption")
 require(libdir + "mp4box_ruby")
 require(libdir + "bontsdemux")
+require(libdir + "get_input")
 
 
 
@@ -161,12 +162,7 @@ def main
   dest = wpath conf[:dest]
   
   # 対象directory取得
-  dir = if ARGV.empty?
-    print "dir >"
-    STDIN.gets.to_s.chomp.toutf8
-  else
-    ARGV.first
-  end
+  dir = get_input("ts & mp4 directory")
   return if dir.empty?
   
   # 変換ファイル取得
