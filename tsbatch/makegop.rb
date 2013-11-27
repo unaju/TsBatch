@@ -13,6 +13,7 @@ MYDIR = Pathname.new(__FILE__).dirname.expand_path
 libdir = (MYDIR + "../lib").expand_path
 #require(libdir + "wincode")
 require(libdir + "tsfilelist")
+require(libdir + "get_input")
 
 MME = YAML.load_file((MYDIR + "config.yml").to_s)[:MME]
 
